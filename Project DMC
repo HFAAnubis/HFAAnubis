@@ -1,0 +1,45 @@
+const Discord = require('discord.js');
+const fetch = require('node-fetch'); // Install node-fetch: npm install node-fetch
+
+const client = new Discord.Client();
+const prefix = '!'; // Change this to your desired command prefix
+const minecraftServerAPI = 'YOUR_MINECRAFT_SERVER_API_ENDPOINT'; // Replace this with the Minecraft server API endpoint
+
+client.once('ready', () => {
+  console.log('Bot is online!');
+});
+
+client.on('message', async message => {
+  if (!message.content.startsWith(prefix) || message.author.bot) return;
+
+  const args = message.content.slice(prefix.length).trim().split(/ +/);
+  const command = args.shift().toLowerCase();
+
+  if (command === 'mcstats') {
+    try {
+      const response = await fetch(minecraftServerAPI);
+      if (response.ok) {
+        const data = await response.json();
+        // Extract the information you want from the API response
+        const playerCount = data.players.online;
+        const maxPlayers = data.players.max;
+        const serverName = data.motd.clean.join(' ');
+
+        const embed = new Discord.MessageEmbed()
+          .setColor('#0099ff')
+          .setTitle('Minecraft Server Stats')
+          .addField('Server Name', serverName)
+          .addField('Players Online', `${playerCount}/${maxPlayers}`);
+
+        message.channel.send({ embeds: [embed] });
+      } else {
+        throw new Error('Failed to fetch server stats');
+      }
+    } catch (error) {
+      console.error('Error fetching server stats:', error);
+      message.channel.send('Failed to fetch server statistics.');
+    }
+  }
+});
+
+client.login('YOUR_DISCORD_BOT_TOKEN'); // Replace with your bot's token
